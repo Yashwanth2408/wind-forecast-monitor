@@ -1,28 +1,3 @@
-# 🌬️ Wind Forecast Monitor
-
-A real-time UK national wind power generation forecast accuracy monitoring dashboard, built for the REint AI Full Stack SWE challenge.
-
-**Live Demo:** [→ Deploy link here after Vercel deploy]
-
----
-
-## 📸 Overview
-
-This app visualises the accuracy of wind generation forecasts against actual measured output from the UK National Grid, using data from the [Elexon BMRS API](https://bmrs.elexon.co.uk).
-
-### Key Features
-- **Dual-line chart** — Actual generation (blue) vs Forecast (green dashed)
-- **Error shading** — Red fill between lines for instant visual error assessment
-- **Configurable forecast horizon** (0–48h slider) — shows the freshest forecast published at least N hours before each target time
-- **Live accuracy metrics** — RMSE, MAE, Bias, and Coverage computed in real-time
-- **CSV export** — Download aligned actual + forecast data
-- **Mobile responsive** — Works on all screen sizes
-- **100% data coverage** — Handles WINDFOR's hourly resolution vs FUELHH's 30-min resolution via floor-to-hour alignment
-
----
-
-## 🗂️ Project Structure
-
 wind-forecast-monitor/
 ├── src/
 │ ├── app/

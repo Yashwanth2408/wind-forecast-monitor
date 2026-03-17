@@ -1,101 +1,147 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { format, subDays } from "date-fns";
+import ForecastChart from "@/components/ForecastChart";
+import StatsPanel from "@/components/StatsPanel";
+import HorizonSlider from "@/components/HorizonSlider";
+import ExportButton from "@/components/ExportButton";
+import { useWindData } from "@/hooks/useWindData";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const today = new Date();
+  const [fromDate, setFromDate] = useState(
+    format(subDays(today, 7), "yyyy-MM-dd")
+  );
+  const [toDate, setToDate] = useState(format(today, "yyyy-MM-dd"));
+  const [horizon, setHorizon] = useState(4);
+  const { data, metrics, loading, error, fetch } = useWindData();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleLoad = () => {
+    const from = new Date(fromDate + "T00:00:00Z").toISOString();
+    const to = new Date(toDate + "T23:59:59Z").toISOString();
+    fetch(from, to, horizon);
+  };
+
+  return (
+    <main className="min-h-screen p-4 md:p-8"
+      style={{ background: "var(--background)" }}>
+
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-3xl">🌬️</span>
+          <h1 className="text-2xl md:text-3xl font-bold"
+            style={{ color: "var(--text-primary)" }}>
+            Wind Forecast Monitor
+          </h1>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <p className="text-sm ml-12" style={{ color: "var(--text-secondary)" }}>
+          UK National Grid · Elexon BMRS · Real-time forecast accuracy
+        </p>
+      </div>
+
+      {/* Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Date From */}
+        <div className="rounded-xl p-4"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <label className="block text-xs font-semibold uppercase tracking-wider mb-2"
+            style={{ color: "var(--text-secondary)" }}>
+            Start Date
+          </label>
+          <input
+            type="date"
+            value={fromDate}
+            min="2025-01-01"
+            max={toDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="w-full bg-transparent text-sm font-medium outline-none"
+            style={{ color: "var(--text-primary)" }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </div>
+
+        {/* Date To */}
+        <div className="rounded-xl p-4"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <label className="block text-xs font-semibold uppercase tracking-wider mb-2"
+            style={{ color: "var(--text-secondary)" }}>
+            End Date
+          </label>
+          <input
+            type="date"
+            value={toDate}
+            min={fromDate}
+            max={format(today, "yyyy-MM-dd")}
+            onChange={(e) => setToDate(e.target.value)}
+            className="w-full bg-transparent text-sm font-medium outline-none"
+            style={{ color: "var(--text-primary)" }}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        </div>
+
+        {/* Load Button */}
+        <button
+          onClick={handleLoad}
+          disabled={loading}
+          className="rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+          style={{
+            background: loading ? "var(--surface-2)" : "var(--accent-blue)",
+            color: loading ? "var(--text-secondary)" : "#fff",
+            border: "1px solid var(--border)",
+            cursor: loading ? "not-allowed" : "pointer",
+            padding: "1rem",
+          }}>
+          {loading ? (
+            <><span className="animate-spin">⚙️</span> Loading...</>
+          ) : (
+            <><span>⚡</span> Load Data</>
+          )}
+        </button>
+      </div>
+
+      {/* Horizon Slider */}
+      <div className="mb-6">
+        <HorizonSlider value={horizon} onChange={setHorizon} />
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 rounded-xl p-4 text-sm"
+          style={{ background: "#2d1515", border: "1px solid var(--accent-red)", color: "var(--accent-red)" }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Stats Panel */}
+      <div className="mb-6">
+        <StatsPanel metrics={metrics} loading={loading} />
+      </div>
+
+      {/* Chart */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider"
+            style={{ color: "var(--text-secondary)" }}>
+            Generation vs Forecast (MW)
+          </h2>
+          <div className="flex items-center gap-2">
+            {data.length > 0 && (
+              <span className="text-xs px-2 py-1 rounded-md"
+                style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}>
+                {data.length} data points
+              </span>
+            )}
+            <ExportButton data={data} disabled={data.length === 0 || loading} />
+          </div>
+
+        </div>
+        <ForecastChart data={data} loading={loading} />
+      </div>
+
+      {/* Footer */}
+      <p className="text-center text-xs mt-8" style={{ color: "var(--text-secondary)" }}>
+        Data source: Elexon BMRS API · FUELHH (actuals) + WINDFOR (forecasts) · Jan 2025 onwards
+      </p>
+    </main>
   );
 }
