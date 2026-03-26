@@ -64,7 +64,21 @@ export async function GET(req: NextRequest) {
             await sleep(300);
         }
 
-        return NextResponse.json({ data: allData });
+        // Deduplicate by startTime
+        const uniqueMap = new Map<string, ActualRecord>();
+
+        for (const record of allData) {
+            uniqueMap.set(record.startTime, record);
+        }
+
+        const deduped = Array.from(uniqueMap.values());
+
+        // Debug logs (VERY IMPORTANT for validation)
+        console.log("Actuals BEFORE dedup:", allData.length);
+        console.log("Actuals AFTER dedup:", deduped.length);
+
+        return NextResponse.json({ data: deduped });
+
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         return NextResponse.json({ error: message }, { status: 500 });
@@ -73,11 +87,12 @@ export async function GET(req: NextRequest) {
 
 function filterWind(raw: BMRSFuelRecord[]): ActualRecord[] {
     if (!Array.isArray(raw)) return [];
+
     return raw
-        .filter((r) => r.fuelType === "WIND")
+        .filter((r) => r.fuelType === "WIND" && r.generation != null)
         .map((r) => ({
             startTime: r.startTime,
-            generation: r.generation ?? 0,
+            generation: r.generation,
         }));
 }
 

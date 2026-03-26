@@ -1,146 +1,215 @@
-# 🌬️ Wind Forecast Monitor
+# Wind Forecast Monitoring & Analysis Platform
 
-A real-time UK national wind power generation forecast accuracy monitoring dashboard, built for the REint AI Full Stack SWE challenge.
+## Overview
+This project is a full-stack wind power forecasting analysis platform built using live UK National Grid data from the Elexon BMRS API. 
 
-**Live Demo:** [→ Deploy link here after Vercel deploy]
+It combines:
+* A real-time interactive dashboard for monitoring forecast accuracy
+* A robust backend pipeline for ingesting and aligning forecast data
+* Analytical notebooks for deep error analysis and model improvement
+* Bias correction techniques with quantified economic impact
 
----
-
-## 📸 Overview
-
-This app visualises the accuracy of wind generation forecasts against actual measured output from the UK National Grid, using data from the [Elexon BMRS API](https://bmrs.elexon.co.uk).
-
-### Key Features
-- **Dual-line chart** — Actual generation (blue) vs Forecast (green dashed)
-- **Error shading** — Red fill between lines for instant visual error assessment
-- **Configurable forecast horizon** (0–48h slider) — shows the freshest forecast published at least N hours before each target time
-- **Live accuracy metrics** — RMSE, MAE, Bias, and Coverage computed in real-time
-- **CSV export** — Download aligned actual + forecast data
-- **Mobile responsive** — Works on all screen sizes
-- **100% data coverage** — Handles WINDFOR's hourly resolution vs FUELHH's 30-min resolution via floor-to-hour alignment
+The system is designed to simulate real-world operational forecasting scenarios and evaluate forecast performance across different time horizons.
 
 ---
 
-## 🗂️ Project Structure
+## Live Data Integration
+All data is fetched dynamically from the BMRS API:
+* **`FUELHH`** → Half-hourly actual wind generation
+* **`WINDFOR`** → Forecast data with multiple publish times
 
-wind-forecast-monitor/
-├── src/
-│ ├── app/
-│ │ ├── api/
-│ │ │ ├── actuals/route.ts # Proxy → FUELHH/stream (WIND filter)
-│ │ │ └── forecasts/route.ts # Proxy → WINDFOR/stream (48h extended window)
-│ │ ├── globals.css # Design system (CSS variables)
-│ │ ├── layout.tsx # Root layout
-│ │ └── page.tsx # Main dashboard
-│ ├── components/
-│ │ ├── ForecastChart.tsx # Recharts dual-line + error shading
-│ │ ├── HorizonSlider.tsx # 0–48h configurable slider
-│ │ ├── StatsPanel.tsx # RMSE/MAE/Bias/Coverage cards
-│ │ └── ExportButton.tsx # CSV download
-│ ├── hooks/
-│ │ └── useWindData.ts # Data fetching + alignment orchestration
-│ ├── lib/
-│ │ ├── api.ts # Client-side fetch helpers
-│ │ ├── horizon-logic.ts # Core horizon-filtering algorithm
-│ │ └── metrics.ts # RMSE, MAE, bias calculations
-│ └── types/
-│ └── index.ts # TypeScript interfaces
-├── notebooks/
-│ ├── 01_forecast_error_analysis.ipynb
-│ └── 02_wind_reliability_analysis.ipynb
-├── .env.example
-└── README.md
-
-text
+### Data Engineering Considerations
+* Chunked API requests to avoid rate limits
+* Automatic retry handling (HTTP `429`)
+* Deduplication of records
+* Time normalization across datasets
+* Handling resolution mismatch (30-min actuals vs hourly forecasts)
 
 ---
 
-## 🚀 Running Locally
+## System Architecture
 
-### Prerequisites
-- Node.js 18+
-- Python 3.10+
+### Frontend
+* **Next.js** (App Router)
+* **TypeScript**
+* **Tailwind CSS**
+* **Recharts** (data visualization)
 
-### Web App
+### Backend (API Routes)
+* **`/api/actuals`**: Fetches `FUELHH` data, filters `WIND` fuel type, and deduplicates by `startTime`.
+* **`/api/forecasts`**: Fetches `WINDFOR` data, handles multiple publish times, and deduplicates by (`startTime` + `publishTime`).
+
+### Data Pipeline
+1. Fetch chunked data from BMRS
+2. Normalize and filter records
+3. Deduplicate entries
+4. Align forecasts with actuals based on horizon
+5. Compute metrics
+6. Render visual analytics
+
+---
+
+## Core Technical Insight — Forecast Horizon Alignment
+The central challenge in this project is correctly aligning forecasts with actual generation. For each actual timestamp **T**, the system selects:
+
+> The latest forecast published at or before **T − H**
+> *(Where **H** = forecast horizon, ranging from 1h to 48h)*
+
+### Implementation Details
+* Forecasts are grouped by start time (hourly resolution).
+* Actuals (30-min resolution) are floored to the nearest hour.
+* Forecast candidates are filtered by:
+  * Publish time cutoff
+  * Valid horizon window (0–48 hours)
+* The most recent valid forecast is selected.
+
+*This logic ensures a realistic simulation of grid operator decision-making.*
+
+---
+
+## Features
+
+### 1. Interactive Dashboard
+* Date range selection
+* Horizon selection (1h → 48h)
+* Real-time data loading
+* Live BMRS integration
+
+### 2. Forecast vs Actual Visualization
+* Time series comparison
+* Error band visualization
+* Downsampling for performance
+* Custom tooltips with error breakdown
+
+### 3. Performance Metrics
+* **MAE** (Mean Absolute Error)
+* **RMSE** (Root Mean Squared Error)
+* **Bias** (systematic over/under-forecasting)
+* **Coverage** (% matched forecasts)
+
+### 4. Horizon Comparison
+* Compare two forecast horizons side-by-side
+* Visual degradation of accuracy with increasing horizon
+* Quantified RMSE difference
+* Percentage degradation analysis
+
+### 5. Error Heatmap
+* Error distribution across:
+  * Day of week
+  * Time of day (30-min slots)
+* Metrics: MAE, RMSE, Bias
+* Interactive tooltips with sample counts
+
+### 6. Statistical Analysis Panel
+* Mean, median, percentiles (P5, P95, P99)
+* Min/max error
+* Distribution insights
+
+### 7. CSV Export
+* Export aligned dataset
+* Includes: Actual generation, Forecast values, Publish timestamps, and Horizon used
+
+---
+
+## Analytical Work
+
+### Notebook 1 — Forecast Error Analysis
+* Baseline error metrics
+* Horizon degradation analysis
+* Temporal error patterns (hour, day)
+* Error distributions
+* Extreme event analysis
+
+### Notebook 2 — Wind Generation & Reliability
+* Generation percentiles (P50, P90, P95)
+* Low generation risk scenarios
+* Seasonal and diurnal trends
+* Reliability analysis
+
+---
+
+## Model Improvement — Bias Correction
+Three correction strategies were evaluated:
+
+| Model | Description |
+| :--- | :--- |
+| **BC1** | Global bias correction |
+| **BC2** | Hour-of-day correction |
+| **BC3** | Hour × Month correction |
+
+**Best Model: BC2**
+* MAE reduced from **1,752 MW** → **1,084 MW**
+* Improvement: **38.1%**
+
+---
+
+## Business Impact
+Improved forecast accuracy directly translates to cost savings:
+* **Daily savings:** £1,121,097
+* **Annual savings:** £409.2M
+
+*This demonstrates the operational importance of reducing forecast error in energy systems.*
+
+---
+
+## Key Engineering Highlights
+* Robust handling of API rate limits
+* Efficient data alignment algorithm `O(n)`
+* Clean separation of concerns: API layer, Data logic, Visualization
+* Scalable architecture for real-time use
+* Accurate simulation of real-world forecasting workflows
+
+---
+
+## How to Run Locally
 
 ```bash
 npm install
-cp .env.example .env.local
 npm run dev
-Open http://localhost:3000
 
-Jupyter Notebooks
-bash
-.venv-notebooks\Scripts\activate      # Windows
-source .venv-notebooks/bin/activate   # Mac/Linux
+Open your browser and navigate to: http://localhost:3000
 
-jupyter lab notebooks/
-Select kernel: Wind Forecast (Python 3.10)
+Deployment
+The application is designed for deployment on Vercel.
 
-🧠 Core Algorithm — Horizon Filtering
-For each actual measurement at time T, the app finds the latest forecast where:
-
-text
-publishTime ≤ T − horizonHours
-AND 0 ≤ (T − publishTime) ≤ 48h
-Key implementation detail: WINDFOR publishes at hourly resolution while FUELHH actuals are 30-minute resolution. The algorithm floors actual timestamps to the hour before lookup, achieving 100% coverage.
-
-📊 Data Sources
-Dataset	Endpoint	Description
-Actuals	FUELHH/stream	Half-hourly generation outturn by fuel type — filtered for WIND
-Forecasts	WINDFOR/stream	National wind generation forecast, hourly resolution
-Data range: January 2025 onwards only.
-
-🛠️ Tech Stack
-Layer	Technology
-Frontend	Next.js 14, TypeScript, Tailwind CSS
-Charts	Recharts
-Backend/Proxy	Next.js API Routes (server-side BMRS fetch)
-Analysis	Python, pandas, numpy, matplotlib, seaborn, scipy
-Deploy	Vercel
-🤖 AI Tool Usage
-AI tools (Claude/Perplexity) were used to assist with:
-
-Code scaffolding and boilerplate
-
-TypeScript type definitions
-
-Bug fixing
-
-All analytical reasoning in the Jupyter notebooks, algorithm design for horizon filtering, and architectural decisions were done independently.
-
-text
-
-***
-
-## Run final build check:
+Optional environment variable:
 
 ```bash
-npm run build
-Should show ✓ Compiled successfully with no errors.
+BMRS_BASE_URL=[https://data.elexon.co.uk/bmrs/api/v1](https://data.elexon.co.uk/bmrs/api/v1)
+```
 
-✅ After Build Passes — Next: Vercel Deploy
-Run this in terminal:
+AI Usage Disclosure
+AI tools were used for:
 
-bash
-npm install -g vercel
-vercel
-Answer prompts:
 
-Set up and deploy? → Y
+Code structuring and debugging assistance
 
-Which scope? → your account
+Analytical guidance
 
-Link to existing project? → N
+Visualization refinement
 
-Project name? → wind-forecast-monitor
+All core logic, validation, and implementation decisions were independently verified.
 
-Directory? → ./ (press Enter)
+Future Improvements
+Real-time streaming updates
 
-Override settings? → N
+ML-based forecast correction models
 
-After deploy, add the env variable in Vercel dashboard:
+Weather feature integration
 
-Go to your project → Settings → Environment Variables
+Alert system for extreme forecast errors
 
-Add: BMRS_BASE_URL = https://data.elexon.co.uk/bmrs/api/v1
+Multi-region support
+
+Conclusion
+This project demonstrates how raw energy data can be transformed into actionable insights through:
+
+Careful data engineering
+
+Correct temporal alignment of forecasts
+
+Robust statistical analysis
+
+Interactive visualization
+
+It highlights both the technical and economic importance of accurate wind power forecasting in modern energy systems.

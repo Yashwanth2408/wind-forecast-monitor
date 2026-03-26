@@ -11,63 +11,36 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "monospace"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["'Roboto Mono'", "monospace"],
       },
       colors: {
-        // Dark theme
-        dark: {
-          bg: "#080C14",
-          surface: "#0D1321",
-          "surface-2": "#111827",
-          "surface-3": "#1a2235",
-          border: "#1e2d45",
-          "border-2": "#253550",
+        d: {
+          bg: "#0f0e17",
+          surface: "#1a1829",
+          s2: "#211f32",
+          s3: "#2a2840",
+          border: "rgba(255,255,255,0.07)",
+          border2: "rgba(255,255,255,0.12)",
+          text: "#e4e3f0",
+          text2: "#8b8ba8",
+          text3: "#5a5a70",
         },
-        // Light theme
-        light: {
-          bg: "#F4F7FB",
-          surface: "#FFFFFF",
-          "surface-2": "#F0F4FA",
-          "surface-3": "#E8EEF8",
-          border: "#D1DCF0",
-          "border-2": "#B8CCE8",
-        },
-        brand: {
-          blue: "#3B82F6",
-          "blue-dim": "#2563EB",
-          green: "#10B981",
-          "green-dim": "#059669",
-          red: "#EF4444",
-          amber: "#F59E0B",
-          purple: "#8B5CF6",
+        accent: {
+          orange: "#ff6533",
+          "orange-dim": "rgba(255,101,51,0.12)",
+          purple: "#7c6fe0",
+          "purple-dim": "rgba(124,111,224,0.12)",
+          green: "#4ade80",
+          "green-dim": "rgba(74,222,128,0.12)",
+          blue: "#60a5fa",
+          "blue-dim": "rgba(96,165,250,0.12)",
+          red: "#f87171",
+          "red-dim": "rgba(248,113,113,0.12)",
         },
       },
-      animation: {
-        "fade-in": "fadeIn 0.4s ease-out",
-        "slide-up": "slideUp 0.4s ease-out",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        shimmer: "shimmer 1.5s infinite",
-      },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        slideUp: {
-          "0%": { opacity: "0", transform: "translateY(12px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        },
-      },
-      boxShadow: {
-        "card-dark": "0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,45,69,0.8)",
-        "card-light": "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(209,220,240,0.8)",
-        "glow-blue": "0 0 20px rgba(59,130,246,0.2)",
-        "glow-green": "0 0 20px rgba(16,185,129,0.2)",
+      borderRadius: {
+        card: "14px",
       },
     },
   },

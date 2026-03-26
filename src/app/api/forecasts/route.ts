@@ -61,7 +61,21 @@ export async function GET(req: NextRequest) {
             await sleep(300);
         }
 
-        return NextResponse.json({ data: allData });
+        //  Deduplicate by (startTime + publishTime)
+        const uniqueMap = new Map<string, ForecastRecord>();
+
+        for (const record of allData) {
+            const key = `${record.startTime}_${record.publishTime}`;
+            uniqueMap.set(key, record);
+        }
+
+        const deduped = Array.from(uniqueMap.values());
+
+        //  Debug logs
+        console.log("Forecasts BEFORE dedup:", allData.length);
+        console.log("Forecasts AFTER dedup:", deduped.length);
+
+        return NextResponse.json({ data: deduped });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         return NextResponse.json({ error: message }, { status: 500 });
@@ -70,12 +84,13 @@ export async function GET(req: NextRequest) {
 
 function normalizeForecasts(raw: BMRSForecastRecord[]): ForecastRecord[] {
     if (!Array.isArray(raw)) return [];
+
     return raw
-        .filter((r) => r.startTime && r.publishTime)
+        .filter((r) => r.startTime && r.publishTime && r.generation != null)
         .map((r) => ({
             startTime: r.startTime,
             publishTime: r.publishTime,
-            generation: r.generation ?? 0,
+            generation: r.generation,
         }));
 }
 
